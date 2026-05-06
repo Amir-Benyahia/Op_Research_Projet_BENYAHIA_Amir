@@ -22,3 +22,10 @@ class ResidualGraph:
         self.adj[src].append(forward)
         self.adj[dst].append(backward)
         return forward
+
+    def augment(self, path_arcs, flow_amount):
+        for arc in path_arcs:
+            arc.capacity -= flow_amount
+            arc.reverse.capacity += flow_amount
+            arc.flow += flow_amount
+            arc.reverse.flow -= flow_amount
