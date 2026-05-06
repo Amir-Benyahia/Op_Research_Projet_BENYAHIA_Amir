@@ -2,4 +2,3 @@
 
 Implémentation d'algorithmes de flots en Python pour le cours de Recherche Opérationnelle.
 
-En cours de développement.
