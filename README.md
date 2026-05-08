@@ -1,99 +1,162 @@
-# Algorithmes de Flots en Python
+# Op Research Projet — BENYAHIA Amir
 
-Implémentation from scratch des algorithmes de flots en Python — sans aucune librairie externe.
+**Master Informatique 1ère année — JC Régin 2020**
+
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Tests](https://img.shields.io/badge/Tests-22%20passed-brightgreen)
+
+---
+
+## Description
+
+Implémentation from scratch en Python pur des algorithmes de flots en réseau, sans aucune librairie externe de graphes.
+Tous les algorithmes reposent sur une structure de graphe résiduel maison avec arcs couplés forward/backward.
+Le projet couvre le flot maximum, le flot de coût minimum et la détection de cycles négatifs,
+avec une interface en ligne de commande et une visualisation PNG via Graphviz.
 
 ---
 
 ## Algorithmes implémentés
 
-| Algorithme | Description |
-|---|---|
-| **Ford-Fulkerson** | Calcul du flot maximum par chemins augmentants (BFS), avec détection du coupe minimum (théorème max-flow min-cut). |
-| **Détection de cycles négatifs** | Bellman-Ford sur le graphe résiduel complet ; identifie les nœuds du cycle et lève une assertion si demandé. |
-| **Min Cost Flow — Bellman-Ford** | Flot de coût minimum par chemins augmentants successifs les moins chers ; tolère les coûts négatifs sur les arcs. |
-| **Min Cost Flow — Dijkstra** | Variante plus rapide utilisant la renormalisation de Johnson (potentiels de Johnson) pour rendre tous les coûts réduits positifs et appliquer Dijkstra à chaque itération. |
+| Algorithme | Fichier | Complexité | Description |
+|---|---|---|---|
+| Ford-Fulkerson (Edmonds-Karp) | `algorithms/ford_fulkerson.py` | O(VE²) | Max flow + min cut |
+| Min Cost Flow — Bellman-Ford | `algorithms/min_cost_flow_bf.py` | O(n²m) | Successive shortest paths, gère les coûts négatifs |
+| Min Cost Flow — Dijkstra | `algorithms/min_cost_flow_dijkstra.py` | O(n(V+E)logV) | Dijkstra + renormalisation des coûts |
+| Détection cycles négatifs | `algorithms/negative_cycle.py` | O(VE) | Garantit l'optimalité du flot |
 
 ---
 
 ## Structure du projet
 
 ```
-Op_Research_Projet_Benyahia_Amir/
-│
-├── graph/
-│   ├── __init__.py
-│   └── residual_graph.py        # Classes Arc et ResidualGraph (liste d'adjacence)
-│
+Op_Research_Projet_BENYAHIA_Amir/
 ├── algorithms/
-│   ├── __init__.py
-│   ├── negative_cycle.py        # detect_negative_cycle, assert_no_negative_cycle
-│   ├── ford_fulkerson.py        # bfs_find_path, ford_fulkerson, find_min_cut, print_flow_result
-│   ├── min_cost_flow_bf.py      # bellman_ford_shortest_path, reconstruct_path, min_cost_flow_bellman_ford
-│   └── min_cost_flow_dijkstra.py# initialize_potentials_bellman_ford, dijkstra_with_potentials, min_cost_flow_dijkstra
-│
+│   ├── ford_fulkerson.py          # BFS + augmentation + min cut
+│   ├── min_cost_flow_bf.py        # Bellman-Ford + reconstruction de chemin
+│   ├── min_cost_flow_dijkstra.py  # Potentiels de Johnson + Dijkstra
+│   └── negative_cycle.py          # Détection et assertion cycle négatif
+├── graph/
+│   ├── residual_graph.py          # Classes Arc et ResidualGraph (liste d'adjacence)
+│   └── visualizer.py              # Génération .dot et .png via Graphviz
+├── examples/
+│   ├── simple.txt                 # Graphe à 5 nœuds avec coûts
+│   ├── assignment.txt             # Graphe d'affectation (Peter/Paul/Mary)
+│   └── negative_cost.txt          # Graphe avec coûts négatifs (test BF vs Dijkstra)
 ├── tests/
-│   ├── __init__.py
-│   ├── test_ford_fulkerson.py   # 7 tests — max flow, min cut, graphe biparti, cas limites
-│   ├── test_min_cost_flow.py    # 7 tests — BF vs Dijkstra, required_flow, graphes variés
-│   └── test_negative_cycle.py  # 8 tests — cycles négatifs, faux positifs, cas limites
-│
-├── main.py                      # Démonstrations des 4 algorithmes
+│   ├── test_ford_fulkerson.py     # 7 tests — max flow, min cut, biparti, cas limites
+│   ├── test_min_cost_flow.py      # 7 tests — BF vs Dijkstra, required_flow, diamant
+│   └── test_negative_cycle.py    # 8 tests — détection, faux positifs, assert
+├── main.py                        # Interface CLI + démonstrations hardcodées
 └── README.md
 ```
 
 ---
 
+## Structure de données : Graphe Résiduel
+
+C'est la pièce centrale du projet. Le graphe résiduel est représenté par une **liste d'adjacence** (`dict[node → list[Arc]]`).
+
+Chaque arc logique (i, j) du graphe original génère **deux objets `Arc` couplés** via un pointeur `arc.reverse` :
+
+- **Arc forward** (i → j) : capacité résiduelle `u(i,j) - f(i,j)`, coût `c(i,j)`
+- **Arc backward** (j → i) : capacité résiduelle `f(i,j) - l(i,j)`, coût `-c(i,j)`
+
+Lors d'une augmentation de flot, les deux arcs sont mis à jour en **O(1)** grâce au pointeur `reverse` — sans reconstruction du graphe résiduel à chaque itération.
+
+```
+Arc original (i) ──[cap=u-f, cost=c]──▶ (j)
+Arc inverse  (j) ──[cap=f-l, cost=-c]──▶ (i)
+         └─── arc.reverse ───┘
+```
+
+Ce design permet :
+- un accès immédiat à l'arc inverse (pas de recherche)
+- une mise à jour atomique du résiduel en une passe
+- une compatibilité directe avec Bellman-Ford et Dijkstra sans transformation du graphe
+
+---
+
 ## Prérequis
 
-- Python 3.8 ou supérieur
+- Python 3.8+
 - Aucune dépendance externe pour les algorithmes
-- `pytest` uniquement pour exécuter les tests
+- `pytest` pour les tests : `pip install pytest`
+- Graphviz pour la visualisation :
+  - Mac : `brew install graphviz`
+  - Linux : `apt install graphviz`
 
 ---
 
 ## Installation
 
 ```bash
-git clone <url-du-repo>
-cd Op_Research_Projet_Benyahia_Amir
+git clone https://github.com/Amir-Benyahia/Op_Research_Projet_BENYAHIA_Amir.git
+cd Op_Research_Projet_BENYAHIA_Amir
 ```
 
 ---
 
 ## Utilisation
 
+### Ligne de commande
+
 ```bash
-python3 main.py
+# Ford-Fulkerson sur un fichier
+python main.py examples/simple.txt --algo ford_fulkerson
+
+# Min cost flow Bellman-Ford
+python main.py examples/assignment.txt --algo min_cost_bf
+
+# Min cost flow Dijkstra
+python main.py examples/negative_cost.txt --algo min_cost_dijkstra
+
+# Avec visualisation PNG (génère outputs/NOM_ALGO.png)
+python main.py examples/simple.txt --algo ford_fulkerson --visualize
+
+# Démonstrations hardcodées
+python main.py --demo
+
+# Aide
+python main.py --help
 ```
 
-Le script enchaîne six démonstrations :
+### Format du fichier d'entrée
 
-1. **Ford-Fulkerson** — graphe à 5 nœuds, affichage du flot sur chaque arc, vérification max-flow = min-cut.
-2. **Graphe d'affectation** — réseau Peter/Paul/Mary avec 3 personnes, 5 projets et 3 tâches ; max flow attendu = 7.
-3. **Min Cost Flow Bellman-Ford** — même graphe avec coûts, affiche `total_flow` et `total_cost`.
-4. **Min Cost Flow Dijkstra** — même graphe, vérifie que le résultat est identique à Bellman-Ford.
-5. **Comparaison BF vs Dijkstra** — graphe à 6 nœuds, les deux algorithmes doivent produire des résultats identiques.
-6. **Détection de cycles négatifs** — trois graphes distincts avec affichage des nœuds du cycle détecté.
+```
+# Commentaire
+nodes 5          # nombre de noeuds
+arc 0 1 10 2     # src dst capacité coût
+arc 0 2 8 4
+source 0         # noeud source
+sink 4           # noeud puits
+```
+
+Le champ `coût` est optionnel (défaut : 0). Les lignes commençant par `#` sont ignorées.
+
+### Exemples fournis
+
+| Fichier | Description |
+|---|---|
+| `examples/simple.txt` | Graphe à 5 nœuds avec capacités et coûts, source=0, sink=4 |
+| `examples/assignment.txt` | Graphe d'affectation (Peter, Paul, Mary → Bob, Mike, Julia), source=0, sink=7 |
+| `examples/negative_cost.txt` | Graphe avec un arc de coût négatif — teste la robustesse de Bellman-Ford et la renormalisation Dijkstra |
 
 ---
 
 ## Tests
 
 ```bash
-python3 -m pytest tests/ -v
+python -m pytest tests/
+python -m pytest tests/ -v    # mode verbose
 ```
 
-22 tests couvrent :
+**22 tests passent**, répartis en trois fichiers :
 
-- **Ford-Fulkerson** (7 tests) : flot maximum, égalité max-flow/min-cut, graphe pathologique, couplage biparti, absence de chemin, arc unique.
-- **Min Cost Flow** (7 tests) : résultats identiques BF et Dijkstra, contrainte `required_flow`, graphe diamant, chemin unique, chemins parallèles.
-- **Cycles négatifs** (8 tests) : détection correcte, absence de faux positifs sur arcs backward, `assert_no_negative_cycle`, nœud isolé, graphe à deux nœuds.
-
----
-
-## Structure de données
-
-Le graphe résiduel est représenté par une **liste d'adjacence** (`dict[node, list[Arc]]`). Chaque arc logique génère deux objets `Arc` couplés par un pointeur `reverse` : l'arc forward (capacité initiale, coût c) et l'arc backward (capacité 0, coût −c). Lors d'une augmentation de flot, les capacités des deux arcs sont mises à jour en O(1) via ce pointeur. Ce couplage garantit la cohérence du résiduel sans reconstruction, et la liste d'adjacence permet de ne parcourir que les voisins actifs — ce qui est efficace pour des graphes creux, typiques des problèmes de flots.
+- **`test_ford_fulkerson.py`** (7 tests) : vérifie que `max_flow == min_cut` sur plusieurs topologies (graphe simple, graphe pathologique, couplage biparti maximum, absence de chemin, arc unique).
+- **`test_min_cost_flow.py`** (7 tests) : vérifie que Bellman-Ford et Dijkstra produisent des résultats identiques sur les mêmes graphes, teste la contrainte `required_flow`, le graphe diamant et les chemins parallèles.
+- **`test_negative_cycle.py`** (8 tests) : vérifie la détection correcte des cycles négatifs, l'absence de faux positifs sur les arcs backward, le comportement de `assert_no_negative_cycle`, et les cas limites (nœud isolé, graphe à deux nœuds).
 
 ---
 
