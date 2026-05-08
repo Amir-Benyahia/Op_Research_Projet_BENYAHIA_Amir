@@ -1,6 +1,5 @@
 # Op Research Projet — BENYAHIA Amir
 
-**Master Informatique 1ère année
 ---
 
 ## Description
