@@ -1,11 +1,6 @@
 # Op Research Projet — BENYAHIA Amir
 
-**Master Informatique 1ère année — JC Régin 2020**
-
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Tests](https://img.shields.io/badge/Tests-22%20passed-brightgreen)
-
+**Master Informatique 1ère année
 ---
 
 ## Description
