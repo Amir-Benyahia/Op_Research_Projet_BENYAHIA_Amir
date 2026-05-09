@@ -1,6 +1,6 @@
 # Op Research Projet — BENYAHIA Amir
 
-Master Informatique 1ère année — JC Régin 2026
+Master Informatique 1ère année
 
 ---
 
