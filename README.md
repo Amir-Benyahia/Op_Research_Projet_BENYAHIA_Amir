@@ -36,9 +36,9 @@ Op_Research_Projet_BENYAHIA_Amir/
 │   ├── assignment.txt             # Graphe d'affectation biparti
 │   └── negative_cost.txt          # Graphe avec coûts négatifs
 ├── tests/
-│   ├── test_ford_fulkerson.py     # 7 tests
-│   ├── test_min_cost_flow.py      # 7 tests
-│   └── test_negative_cycle.py     # 8 tests
+│   ├── test_ford_fulkerson.py     # 3 tests
+│   ├── test_min_cost_flow.py      # 3 tests
+│   └── test_negative_cycle.py     # 3 tests
 ├── main.py                        # Interface CLI
 └── README.md
 ```
@@ -131,7 +131,7 @@ Le champ `coût` est optionnel (défaut : 0). Les lignes commençant par `#` son
 python -m pytest tests/ -v
 ```
 
-22 tests passent. Ils vérifient que `max_flow == min_cut` sur plusieurs topologies, que Bellman-Ford et Dijkstra produisent des résultats identiques sur les mêmes graphes, et que la détection de cycles négatifs ne remonte ni faux positifs ni faux négatifs.
+9 tests vérifient les invariants principaux : `max_flow == min_cut`, Bellman-Ford et Dijkstra produisent les mêmes résultats sur les mêmes graphes, et la détection de cycles négatifs ne remonte pas de faux positifs.
 
 ---
 
