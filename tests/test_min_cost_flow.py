@@ -1,6 +1,4 @@
-"""
-Tests unitaires — Min Cost Flow (Bellman-Ford et Dijkstra).
-"""
+# Tests Min Cost Flow (BF + Dijkstra)
 
 import sys
 import os
@@ -13,15 +11,7 @@ from algorithms.negative_cycle import assert_no_negative_cycle
 
 
 def build_simple_cost_graph():
-    """
-    5 nœuds, source=0, sink=4.
-      0→1 (cap=10, cost=2)  1→3 (cap=10, cost=1)
-      0→2 (cap=10, cost=4)  2→3 (cap=10, cost=3)
-      1→2 (cap=5,  cost=1)  3→4 (cap=10, cost=0)  ← bottleneck
-
-    Chemin le moins cher : 0→1→3→4, coût/unité = 3.
-    Max flow = 10, coût total = 30.
-    """
+    """5 noeuds, max flow = 10, cout total = 30."""
     g = ResidualGraph(5)
     g.add_arc(0, 1, 10, cost=2)
     g.add_arc(0, 2, 10, cost=4)
@@ -41,13 +31,7 @@ def build_single_path_graph():
 
 
 def build_parallel_paths_graph():
-    """
-    Deux chemins parallèles vers sink=2 :
-      0→1 (cap=3, cost=1)  1→2 (cap=3, cost=0)  → coût/unité = 1
-      0→2 (cap=3, cost=3)                         → coût/unité = 3
-
-    Pour 3 unités : uniquement le chemin cheap, coût = 3.
-    """
+    """Deux chemins parallels, pour 3 unites cout = 3."""
     g = ResidualGraph(3)
     g.add_arc(0, 1, 3, cost=1)
     g.add_arc(1, 2, 3, cost=0)
@@ -56,13 +40,7 @@ def build_parallel_paths_graph():
 
 
 def build_diamond_graph():
-    """
-    Diamant source=0, sink=3 :
-      0→1 (cap=4, cost=1)  1→3 (cap=4, cost=2)  → coût/unité = 3
-      0→2 (cap=4, cost=2)  2→3 (cap=4, cost=1)  → coût/unité = 3
-
-    Max flow = 8, coût total = 24.
-    """
+    """Diamant. Max flow = 8, cout = 24."""
     g = ResidualGraph(4)
     g.add_arc(0, 1, 4, cost=1)
     g.add_arc(0, 2, 4, cost=2)

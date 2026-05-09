@@ -1,20 +1,16 @@
+# detection bellman-ford, n iterations au lieu de n-1
+# si on peut encore relaxer a la nieme iteration -> cycle negatif
+
+
 def detect_negative_cycle(graph):
-    """
-    Détecte un cycle négatif dans le graphe résiduel via Bellman-Ford.
-
-    Retourne :
-        (False, None)       si pas de cycle négatif
-        (True, cycle_nodes) si cycle négatif trouvé, avec les nœuds du cycle
-
-    Complexité : O(VE)
-    """
-    INF = float('inf')
+    """Detecte un cycle négatif dans le graphe résiduel."""
     n = graph.num_nodes
     dist = {node: 0 for node in graph.adj}
     pred = {node: None for node in graph.adj}
 
     last_relaxed = None
 
+    # n iterations (et pas n-1) pour pouvoir detecter
     for i in range(n):
         last_relaxed = None
         for node in graph.adj:
@@ -29,22 +25,24 @@ def detect_negative_cycle(graph):
     if last_relaxed is None:
         return False, None
 
+    # reconstruction du cycle : on remonte n fois pour etre sur d'etre dedans
     node = last_relaxed
     for _ in range(n):
         if pred[node] is None:
             return True, [node]
         node = pred[node].src
 
+    # maintenant on est dans le cycle, on le parcourt
     cycle_start = node
     cycle = [cycle_start]
     if pred[cycle_start] is None:
         return True, cycle
 
     node = pred[cycle_start].src
-    visited_in_cycle = {cycle_start}
-    while node != cycle_start and node not in visited_in_cycle:
+    seen = {cycle_start}
+    while node != cycle_start and node not in seen:
         cycle.append(node)
-        visited_in_cycle.add(node)
+        seen.add(node)
         if pred[node] is None:
             break
         node = pred[node].src
@@ -55,11 +53,9 @@ def detect_negative_cycle(graph):
 
 
 def assert_no_negative_cycle(graph, context=""):
-    """
-    Lève une AssertionError si un cycle négatif est détecté.
-    """
-    has_neg_cycle, cycle = detect_negative_cycle(graph)
-    if has_neg_cycle:
+    """Leve une AssertionError si cycle negatif detecte."""
+    has_cycle, cycle = detect_negative_cycle(graph)
+    if has_cycle:
         msg = "Cycle négatif détecté"
         if context:
             msg += f" ({context})"

@@ -1,40 +1,23 @@
-"""
-Algorithmes de flots — interface CLI et démonstrations.
-
-Usage :
-  python main.py examples/simple.txt --algo ford_fulkerson
-  python main.py examples/simple.txt --algo min_cost_bf
-  python main.py examples/simple.txt --algo min_cost_dijkstra
-  python main.py examples/simple.txt --algo ford_fulkerson --visualize
-  python main.py --demo
-"""
+# main de test, a nettoyer
+# CLI + demos hardcodees
 
 import argparse
 import os
 import sys
 
 from graph.residual_graph import ResidualGraph
-from algorithms.ford_fulkerson import ford_fulkerson, find_min_cut
+from algorithms.ford_fulkerson import ford_fulkerson, find_min_cut, print_flow_result
 from algorithms.min_cost_flow_bf import min_cost_flow_bellman_ford
 from algorithms.min_cost_flow_dijkstra import min_cost_flow_dijkstra
 from algorithms.negative_cycle import detect_negative_cycle, assert_no_negative_cycle
 
 
-# ---------------------------------------------------------------------------
-# Parseur de fichier graphe
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------
+# Parser de fichier graphe
+# -----------------------------------------------------------
 
 def parse_graph_file(path):
-    """
-    Lit un fichier .txt et retourne (graph, source, sink).
-
-    Format supporté :
-      nodes N          — nombre de noeuds
-      arc s d cap cost — arc (cost optionnel, défaut 0)
-      source N         — noeud source
-      sink   N         — noeud puits
-      # ...            — commentaire ignoré
-    """
+    """Lit un fichier .txt et retourne (graph, source, sink)."""
     num_nodes = None
     arcs = []
     source = None
@@ -46,16 +29,19 @@ def parse_graph_file(path):
             if not line or line.startswith("#"):
                 continue
             parts = line.split()
-            keyword = parts[0]
-            if keyword == "nodes":
+            kw = parts[0]
+            if kw == "nodes":
                 num_nodes = int(parts[1])
-            elif keyword == "arc":
+            elif kw == "arc":
                 src, dst, cap = int(parts[1]), int(parts[2]), int(parts[3])
-                cost = int(parts[4]) if len(parts) >= 5 else 0
+                if len(parts) >= 5:
+                    cost = int(parts[4])
+                else:
+                    cost = 0
                 arcs.append((src, dst, cap, cost))
-            elif keyword == "source":
+            elif kw == "source":
                 source = int(parts[1])
-            elif keyword == "sink":
+            elif kw == "sink":
                 sink = int(parts[1])
 
     if num_nodes is None:
@@ -63,19 +49,19 @@ def parse_graph_file(path):
     if source is None or sink is None:
         raise ValueError(f"{path} : directives 'source' / 'sink' manquantes.")
 
-    graph = ResidualGraph(num_nodes)
+    g = ResidualGraph(num_nodes)
     for src, dst, cap, cost in arcs:
-        graph.add_arc(src, dst, cap, cost=cost)
+        g.add_arc(src, dst, cap, cost=cost)
 
-    return graph, source, sink
+    return g, source, sink
 
 
-# ---------------------------------------------------------------------------
-# Affichage des résultats
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------
+# Affichage
+# -----------------------------------------------------------
 
-def _arc_lines(graph, with_cost=False):
-    lines = []
+def print_arcs(graph, with_cost=False):
+    """Affiche le flot sur chaque arc."""
     seen = set()
     for node in graph.adj:
         for arc in graph.adj[node]:
@@ -86,20 +72,18 @@ def _arc_lines(graph, with_cost=False):
             if key in seen:
                 continue
             seen.add(key)
-            base = f"  {arc.src} -> {arc.dst} : {arc.flow} / {original_cap}"
+            line = f"  {arc.src} -> {arc.dst} : {arc.flow} / {original_cap}"
             if with_cost:
-                base += f"  (coût unitaire : {arc.cost})"
+                line += f"  (coût unitaire : {arc.cost})"
             else:
-                base += f"  (coût : {arc.cost})"
-            lines.append(base)
-    return lines
+                line += f"  (coût : {arc.cost})"
+            print(line)
 
 
 def print_ford_fulkerson_result(graph, max_flow, source):
     print(f"Flot max : {max_flow}")
     print("Flot sur chaque arc :")
-    for line in _arc_lines(graph, with_cost=False):
-        print(line)
+    print_arcs(graph, with_cost=False)
 
     S, cut_arcs = find_min_cut(graph, source)
     cut_cap = sum(cap for _, _, cap in cut_arcs)
@@ -108,7 +92,10 @@ def print_ford_fulkerson_result(graph, max_flow, source):
     print("Min Cut :")
     print(f"  S = {{{s_nodes}}}")
     print(f"  Arcs coupés : {cut_str}")
-    status = "✓ égale au flot max" if cut_cap == max_flow else "✗ ERREUR"
+    if cut_cap == max_flow:
+        status = "✓ égale au flot max"
+    else:
+        status = "✗ ERREUR"
     print(f"  Capacité totale : {cut_cap}  {status}")
 
 
@@ -116,35 +103,34 @@ def print_min_cost_result(algo_name, graph, total_flow, total_cost):
     print(f"Flot total : {total_flow}")
     print(f"Coût total : {total_cost}")
     print("Flot sur chaque arc :")
-    for line in _arc_lines(graph, with_cost=True):
-        print(line)
+    print_arcs(graph, with_cost=True)
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------
 # Runner CLI
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------
 
 def run_algo(graph_path, algo, do_visualize):
-    graph, source, sink = parse_graph_file(graph_path)
+    g, source, sink = parse_graph_file(graph_path)
     basename = os.path.splitext(os.path.basename(graph_path))[0]
 
     if algo == "ford_fulkerson":
         print("=== FORD-FULKERSON ===")
-        assert_no_negative_cycle(graph)
-        max_flow = ford_fulkerson(graph, source, sink)
-        print_ford_fulkerson_result(graph, max_flow, source)
+        assert_no_negative_cycle(g)
+        max_flow = ford_fulkerson(g, source, sink)
+        print_ford_fulkerson_result(g, max_flow, source)
         title = f"Ford-Fulkerson — {basename}"
 
     elif algo == "min_cost_bf":
         print("=== MIN COST FLOW (Bellman-Ford) ===")
-        total_flow, total_cost = min_cost_flow_bellman_ford(graph, source, sink)
-        print_min_cost_result("Bellman-Ford", graph, total_flow, total_cost)
+        total_flow, total_cost = min_cost_flow_bellman_ford(g, source, sink)
+        print_min_cost_result("Bellman-Ford", g, total_flow, total_cost)
         title = f"Min Cost Flow BF — {basename}"
 
     elif algo == "min_cost_dijkstra":
         print("=== MIN COST FLOW (Dijkstra) ===")
-        total_flow, total_cost = min_cost_flow_dijkstra(graph, source, sink)
-        print_min_cost_result("Dijkstra", graph, total_flow, total_cost)
+        total_flow, total_cost = min_cost_flow_dijkstra(g, source, sink)
+        print_min_cost_result("Dijkstra", g, total_flow, total_cost)
         title = f"Min Cost Flow Dijkstra — {basename}"
 
     else:
@@ -155,12 +141,12 @@ def run_algo(graph_path, algo, do_visualize):
         from graph.visualizer import visualize
         os.makedirs("outputs", exist_ok=True)
         out = os.path.join("outputs", f"{basename}_{algo}")
-        visualize(graph, output_path=out, title=title)
+        visualize(g, output_path=out, title=title)
 
 
-# ---------------------------------------------------------------------------
-# Démonstrations hardcodées
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------
+# Demos hardcodees (du cours)
+# -----------------------------------------------------------
 
 def demo_ford_fulkerson():
     print("\n" + "=" * 60)
@@ -181,8 +167,6 @@ def demo_ford_fulkerson():
 
     assert_no_negative_cycle(g)
     max_flow = ford_fulkerson(g, source, sink)
-
-    from algorithms.ford_fulkerson import print_flow_result
     print_flow_result(g, max_flow, source, sink, node_names)
 
 
@@ -191,9 +175,6 @@ def demo_assignment_graph():
     print("DEMO 2 : Graphe d'affectation Peter/Paul/Mary")
     print("=" * 60)
 
-    # 0=Source, 1=Peter, 2=Paul, 3=Mary,
-    # 4=M, 5=D, 6=N, 7=B, 8=O,
-    # 9=Bob, 10=Mike, 11=Julia, 12=Sink
     g = ResidualGraph(13)
     source, sink = 0, 12
     node_names = {
@@ -202,12 +183,18 @@ def demo_assignment_graph():
         9: "Bob", 10: "Mike", 11: "Julia", 12: "Sink",
     }
 
-    g.add_arc(0, 1, 3); g.add_arc(0, 2, 3); g.add_arc(0, 3, 3)
+    # source -> personnes
+    g.add_arc(0, 1, 3)
+    g.add_arc(0, 2, 3)
+    g.add_arc(0, 3, 3)
+    # personnes -> projets
     g.add_arc(1, 4, 1); g.add_arc(1, 5, 1); g.add_arc(1, 6, 1)
     g.add_arc(2, 4, 1); g.add_arc(2, 7, 1); g.add_arc(2, 8, 1)
     g.add_arc(3, 5, 1); g.add_arc(3, 6, 1); g.add_arc(3, 8, 1)
+    # projets -> taches
     g.add_arc(4, 9, 2); g.add_arc(5, 10, 2); g.add_arc(6, 11, 1)
     g.add_arc(7, 9, 2); g.add_arc(8, 11, 2)
+    # taches -> sink
     g.add_arc(9, sink, 3); g.add_arc(10, sink, 2); g.add_arc(11, sink, 2)
 
     assert_no_negative_cycle(g)
@@ -238,8 +225,8 @@ def demo_min_cost_flow_bellman_ford():
 
     assert_no_negative_cycle(g)
     flow, cost = min_cost_flow_bellman_ford(g, source, sink)
-    print(f"Flot total : {flow}")
-    print(f"Coût total : {cost}")
+    print("Flot total :", flow)
+    print("Coût total :", cost)
 
 
 def demo_min_cost_flow_dijkstra():
@@ -259,9 +246,9 @@ def demo_min_cost_flow_dijkstra():
 
     assert_no_negative_cycle(g)
     flow, cost = min_cost_flow_dijkstra(g, source, sink)
-    print(f"Flot total : {flow}")
-    print(f"Coût total : {cost}")
-    print(f"(attendu : flow=10, cost=40)")
+    print("Flot total :", flow)
+    print("Coût total :", cost)
+    print("(attendu : flow=10, cost=40)")
 
 
 def demo_comparison_bf_vs_dijkstra():
@@ -281,7 +268,8 @@ def demo_comparison_bf_vs_dijkstra():
         g.add_arc(1, 4, 3, cost=1)
         return g
 
-    g1, g2 = make_graph(), make_graph()
+    g1 = make_graph()
+    g2 = make_graph()
     flow_bf, cost_bf = min_cost_flow_bellman_ford(g1, 0, 5)
     flow_dj, cost_dj = min_cost_flow_dijkstra(g2, 0, 5)
 
@@ -299,6 +287,7 @@ def demo_negative_cycle_detection():
     print("DEMO 6 : Détection de Cycles Négatifs")
     print("=" * 60)
 
+    # cycle de cout +1 = pas negatif
     g1 = ResidualGraph(4)
     g1.add_arc(0, 1, 10, cost=2)
     g1.add_arc(1, 2, 10, cost=3)
@@ -307,6 +296,7 @@ def demo_negative_cycle_detection():
     has1, _ = detect_negative_cycle(g1)
     print(f"\nGraphe 1 (cycle de coût +1) : cycle négatif = {has1}  (attendu : False)")
 
+    # cycle de cout -3
     g2 = ResidualGraph(3)
     g2.add_arc(0, 1, 10, cost=1)
     g2.add_arc(1, 2, 10, cost=1)
@@ -316,6 +306,7 @@ def demo_negative_cycle_detection():
     if cycle2:
         print(f"  Nœuds du cycle : {cycle2}")
 
+    # cycle 1->2->3->1
     g3 = ResidualGraph(5)
     g3.add_arc(0, 1, 10, cost=2)
     g3.add_arc(1, 2, 10, cost=3)
@@ -340,9 +331,9 @@ def run_demos():
     print("=" * 60)
 
 
-# ---------------------------------------------------------------------------
-# Point d'entrée
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------
+# Point d'entree
+# -----------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser(
@@ -357,11 +348,7 @@ def main():
             "  python main.py --demo"
         ),
     )
-    parser.add_argument(
-        "graph_file",
-        nargs="?",
-        help="Chemin vers le fichier graphe (.txt)",
-    )
+    parser.add_argument("graph_file", nargs="?", help="Chemin vers le fichier graphe (.txt)")
     parser.add_argument(
         "--algo",
         choices=["ford_fulkerson", "min_cost_bf", "min_cost_dijkstra"],
@@ -370,16 +357,10 @@ def main():
              "  min_cost_bf       — flot de coût minimum (Bellman-Ford)\n"
              "  min_cost_dijkstra — flot de coût minimum (Dijkstra + potentiels)",
     )
-    parser.add_argument(
-        "--visualize",
-        action="store_true",
-        help="Génère une image PNG dans outputs/ (nécessite Graphviz)",
-    )
-    parser.add_argument(
-        "--demo",
-        action="store_true",
-        help="Lance les démonstrations hardcodées (ignore graph_file et --algo)",
-    )
+    parser.add_argument("--visualize", action="store_true",
+                        help="Génère une image PNG dans outputs/ (nécessite Graphviz)")
+    parser.add_argument("--demo", action="store_true",
+                        help="Lance les démonstrations hardcodées (ignore graph_file et --algo)")
 
     args = parser.parse_args()
 

@@ -1,6 +1,4 @@
-"""
-Tests unitaires — Ford-Fulkerson (Edmonds-Karp) et coupe minimale.
-"""
+# Tests Ford-Fulkerson
 
 import sys
 import os
@@ -22,10 +20,7 @@ def build_simple_graph():
 
 
 def build_pathological_graph():
-    """
-    Graphe pathologique pour DFS (deux chemins parallèles de cap 100, arc croisé cap 1).
-    Avec BFS (Edmonds-Karp), résolu efficacement. Max flow = 200.
-    """
+    """Graphe pathologique pour DFS, OK avec BFS. Max flow = 200."""
     g = ResidualGraph(4)
     g.add_arc(0, 1, 100)
     g.add_arc(0, 2, 100)
@@ -36,10 +31,7 @@ def build_pathological_graph():
 
 
 def build_bipartite_graph():
-    """
-    Couplage biparti : 4 nœuds gauche, 4 nœuds droite.
-    Couplage parfait possible → max flow = 4.
-    """
+    """Couplage biparti 4x4, max flow = 4."""
     g = ResidualGraph(10)
     source, sink = 0, 9
     for left in range(1, 5):

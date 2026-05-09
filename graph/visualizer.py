@@ -1,13 +1,21 @@
+# Visualisation Graphviz : genere un .dot puis appelle dot pour faire un .png
+# vert = arc utilise, rouge = sature, noir = inutilise
+
+import os
 import subprocess
 
 
 def generate_dot(graph, title="Graph", node_names=None, show_costs=True):
+    """Construit le contenu du fichier .dot."""
     lines = [f'digraph "{title}" {{']
     lines.append('  rankdir=LR;')
     lines.append('  node [shape=circle];')
 
     for node in graph.adj:
-        label = node_names[node] if node_names else str(node)
+        if node_names:
+            label = node_names[node]
+        else:
+            label = str(node)
         lines.append(f'  {node} [label="{label}"];')
 
     seen = set()
@@ -25,6 +33,7 @@ def generate_dot(graph, title="Graph", node_names=None, show_costs=True):
             if show_costs:
                 label += f", {arc.cost}"
 
+            # couleur en fonction de l'utilisation
             if arc.flow == original_cap:
                 color = "red"
             elif arc.flow > 0:
@@ -42,11 +51,7 @@ def generate_dot(graph, title="Graph", node_names=None, show_costs=True):
 
 
 def visualize(graph, output_path="output", title="Graph", node_names=None, show_costs=True):
-    """
-    Génère output.dot et output.png.
-    Nécessite Graphviz installé (brew install graphviz sur Mac).
-    """
-    import os
+    """Genere output.dot et output.png. Necessite Graphviz (brew install graphviz)."""
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
 
     dot_content = generate_dot(graph, title, node_names, show_costs)

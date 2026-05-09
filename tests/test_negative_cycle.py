@@ -1,6 +1,4 @@
-"""
-Tests unitaires — détection de cycles négatifs.
-"""
+# Tests detection cycles negatifs
 
 import sys
 import os
