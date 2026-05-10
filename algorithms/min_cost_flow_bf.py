@@ -1,5 +1,4 @@
 # Min cost flow par chemins augmentants successifs - version Bellman-Ford
-# bellman-ford classique, voir cours slide 1.55
 # complexite O(n^2 * m)
 
 from graph.residual_graph import ResidualGraph  # noqa: F401
@@ -31,7 +30,7 @@ def bellman_ford_shortest_path(graph, source, sink):
         if not updated:
             break
 
-    # check cycle negatif - si on peut encore relaxer c'est mort
+    # check cycle negatif 
     for node in graph.adj:
         if dist[node] == INF:
             continue
