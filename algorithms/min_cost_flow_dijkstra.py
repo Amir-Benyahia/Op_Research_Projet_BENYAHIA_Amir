@@ -1,5 +1,4 @@
 # Min cost flow avec Dijkstra + renormalisation des couts (Johnson reweighting)
-# galère avec les potentiels au début, voir Johnson reweighting
 # cout reduit : c_R(u,v) = h[u] + c(u,v) - h[v]   -> toujours >= 0
 
 import heapq
