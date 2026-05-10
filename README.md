@@ -68,7 +68,7 @@ Lors d'une augmentation de flot, les deux arcs couplés sont mis à jour en **O(
 
 - Python 3.8+
 - `pytest` pour les tests
-- Graphviz pour la visualisation (optionnel)
+- Graphviz pour la visualisation
 
 ---
 
@@ -95,7 +95,7 @@ python main.py examples/assignment.txt --algo min_cost_bf
 # Min cost flow — Dijkstra
 python main.py examples/negative_cost.txt --algo min_cost_dijkstra
 
-# Avec visualisation PNG (génère outputs/NOM_ALGO.png)
+# Avec visualisation PNG 
 python main.py examples/simple.txt --algo ford_fulkerson --visualize
 
 # Démonstrations
