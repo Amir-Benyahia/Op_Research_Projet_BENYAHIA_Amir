@@ -1,4 +1,4 @@
-# main de test, a nettoyer
+# main
 # CLI + demos hardcodees
 
 import argparse
@@ -12,9 +12,8 @@ from algorithms.min_cost_flow_dijkstra import min_cost_flow_dijkstra
 from algorithms.negative_cycle import detect_negative_cycle, assert_no_negative_cycle
 
 
-# -----------------------------------------------------------
 # Parser de fichier graphe
-# -----------------------------------------------------------
+
 
 def parse_graph_file(path):
     """Lit un fichier .txt et retourne (graph, source, sink)."""
@@ -56,9 +55,9 @@ def parse_graph_file(path):
     return g, source, sink
 
 
-# -----------------------------------------------------------
+
 # Affichage
-# -----------------------------------------------------------
+
 
 def print_arcs(graph, with_cost=False):
     """Affiche le flot sur chaque arc."""
@@ -106,9 +105,9 @@ def print_min_cost_result(algo_name, graph, total_flow, total_cost):
     print_arcs(graph, with_cost=True)
 
 
-# -----------------------------------------------------------
+
 # Runner CLI
-# -----------------------------------------------------------
+
 
 def run_algo(graph_path, algo, do_visualize):
     g, source, sink = parse_graph_file(graph_path)
@@ -144,9 +143,8 @@ def run_algo(graph_path, algo, do_visualize):
         visualize(g, output_path=out, title=title)
 
 
-# -----------------------------------------------------------
-# Demos hardcodees (du cours)
-# -----------------------------------------------------------
+
+# Demos hardcodees 
 
 def demo_ford_fulkerson():
     print("\n" + "=" * 60)
@@ -330,10 +328,8 @@ def run_demos():
     print("✓ Toutes les démonstrations terminées avec succès.")
     print("=" * 60)
 
-
-# -----------------------------------------------------------
 # Point d'entree
-# -----------------------------------------------------------
+
 
 def main():
     parser = argparse.ArgumentParser(
